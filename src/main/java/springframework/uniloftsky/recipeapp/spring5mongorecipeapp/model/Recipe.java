@@ -1,14 +1,21 @@
 package springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@Document
 public class Recipe {
 
-    private Long id;
+    @Id
+    private String id;
 
     private String description;
 
@@ -30,17 +37,18 @@ public class Recipe {
 
     private Byte[] image;
 
+    @DBRef
     private Set<Category> categories = new HashSet<>();
 
     private Notes notes;
 
     public void setNotes(Notes notes) {
-        notes.setRecipe(this);
+//        notes.setRecipe(this);
         this.notes = notes;
     }
 
     public void addIngredient(Ingredient ingredient) {
-        ingredient.setRecipe(this);
+//        ingredient.setRecipe(this);
         this.getIngredients().add(ingredient);
     }
 }

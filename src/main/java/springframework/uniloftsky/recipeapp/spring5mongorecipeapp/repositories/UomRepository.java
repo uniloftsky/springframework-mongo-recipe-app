@@ -5,7 +5,7 @@ import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.UnitOfMe
 
 import java.util.Optional;
 
-public interface UomRepository extends CrudRepository<UnitOfMeasure, Long> {
+public interface UomRepository extends CrudRepository<UnitOfMeasure, String> {
 
     Optional<UnitOfMeasure> findByUom(String uom);
 

@@ -1,11 +1,17 @@
 package springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Data
+@Getter
+@Setter
+@Document
 public class UnitOfMeasure {
 
-    private Long id;
+    @Id
+    private String id;
 
     private String uom;
 }

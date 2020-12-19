@@ -22,7 +22,7 @@ public class IngredientSeviceImpl implements IngredientSevice {
     }
 
     @Override
-    public Ingredient findByRecipeIdAndId(Long id_recipe, Long id) {
+    public Ingredient findByRecipeIdAndId(String id_recipe, String id) {
         Optional<Recipe> recipeOptional = recipeRepository.findById(id_recipe);
         if(recipeOptional.isEmpty()) {
             throw new RuntimeException("Expected recipe is not found!");

@@ -1,19 +1,25 @@
 package springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 
-@Data
-@EqualsAndHashCode(exclude = {"recipe"})
+@Getter
+@Setter
+@Document
 public class Ingredient {
 
-    private Long id;
+    @Id
+    private String id;
 
     private String description;
     private BigDecimal amount;
 
+    @DBRef
     private UnitOfMeasure uof;
 
     private Recipe recipe;

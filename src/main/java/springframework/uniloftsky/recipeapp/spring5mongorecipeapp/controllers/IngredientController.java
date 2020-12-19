@@ -26,14 +26,14 @@ public class IngredientController {
     @GetMapping
     @RequestMapping("recipe/{id}/ingredients")
     public String listOfIngredients(@PathVariable String id, Model model) {
-        model.addAttribute("recipe", recipeService.findById(Long.valueOf(id)));
+        model.addAttribute("recipe", recipeService.findById(id));
         return "recipe/ingredient/list";
     }
 
     @GetMapping
     @RequestMapping("recipe/{id_recipe}/ingredient/{id}/show")
     public String showIngredient(@PathVariable String id_recipe, @PathVariable String id, Model model) {
-        model.addAttribute("ingredient", ingredientSevice.findByRecipeIdAndId(Long.valueOf(id_recipe), Long.valueOf(id)));
+        model.addAttribute("ingredient", ingredientSevice.findByRecipeIdAndId(id_recipe, id));
         return "recipe/ingredient/show";
     }
 
@@ -41,17 +41,17 @@ public class IngredientController {
     @RequestMapping("recipe/{id_recipe}/ingredient/{id}/update")
     public String updateIngredient(@PathVariable String id_recipe, @PathVariable String id, Model model) {
         model.addAttribute("uoms", uomService.getUoms());
-        model.addAttribute("ingredient", ingredientSevice.findByRecipeIdAndId(Long.valueOf(id_recipe), Long.valueOf(id)));
+        model.addAttribute("ingredient", ingredientSevice.findByRecipeIdAndId(id_recipe, id));
         return "recipe/ingredient/ingredientform";
     }
 
     @GetMapping
     @RequestMapping("recipe/{id_recipe}/ingredient/new")
     public String newIngredient(@PathVariable String id_recipe, Model model) {
-        Recipe recipe = recipeService.findById(Long.valueOf(id_recipe));
+        Recipe recipe = recipeService.findById(id_recipe);
         Ingredient ingredient = new Ingredient();
         ingredient.setRecipe(recipe);
-        ingredient.getRecipe().setId(Long.valueOf(id_recipe));
+        ingredient.getRecipe().setId(id_recipe);
         ingredient.setUof(new UnitOfMeasure());
         model.addAttribute("ingredient", ingredient);
         model.addAttribute("uoms", uomService.getUoms());
@@ -60,7 +60,7 @@ public class IngredientController {
 
     @RequestMapping("recipe/{id_recipe}/ingredient/{id}/delete")
     public String deleteIngredient(@PathVariable String id_recipe, @PathVariable String id) {
-        ingredientSevice.delete(ingredientSevice.findByRecipeIdAndId(Long.valueOf(id_recipe), Long.valueOf(id)));
+        ingredientSevice.delete(ingredientSevice.findByRecipeIdAndId(id_recipe, id));
         return "redirect:/recipe/{id_recipe}/ingredients";
     }
 

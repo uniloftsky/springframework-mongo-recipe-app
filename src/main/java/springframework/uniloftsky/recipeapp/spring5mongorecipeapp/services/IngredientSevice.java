@@ -4,7 +4,7 @@ import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Ingredie
 
 public interface IngredientSevice {
 
-    Ingredient findByRecipeIdAndId(Long id_recipe, Long id);
+    Ingredient findByRecipeIdAndId(String id_recipe, String id);
     Ingredient saveIngredient(Ingredient ingredient);
     void delete(Ingredient ingredient);
 
