@@ -2,10 +2,13 @@ package springframework.uniloftsky.recipeapp.spring5mongorecipeapp.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Ingredient;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Recipe;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.RecipeRepository;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.UomRepository;
+import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.RecipeReactiveRepository;
+import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.UomReactiveRepository;
 
 import java.util.Optional;
 
@@ -13,58 +16,55 @@ import java.util.Optional;
 @Service
 public class IngredientSeviceImpl implements IngredientSevice {
 
-    private final RecipeRepository recipeRepository;
+    private  final RecipeRepository recipeRepository;
+    private final RecipeReactiveRepository recipeReactiveRepository;
+    private final UomReactiveRepository uomReactiveRepository;
     private final UomRepository uomRepository;
 
-    public IngredientSeviceImpl(RecipeRepository recipeRepository, UomRepository uomRepository) {
+    public IngredientSeviceImpl(RecipeReactiveRepository recipeReactiveRepository, UomRepository uomRepository, RecipeRepository recipeRepository, UomReactiveRepository uomReactiveRepository, UomRepository uomRepository1) {
+        this.recipeReactiveRepository = recipeReactiveRepository;
         this.recipeRepository = recipeRepository;
-        this.uomRepository = uomRepository;
+        this.uomReactiveRepository = uomReactiveRepository;
+        this.uomRepository = uomRepository1;
     }
 
     @Override
-    public Ingredient findByRecipeIdAndId(String id_recipe, String id) {
-        Optional<Recipe> recipeOptional = recipeRepository.findById(id_recipe);
-        if(recipeOptional.isEmpty()) {
-            throw new RuntimeException("Expected recipe is not found!");
-        }
-
-        Recipe recipe = recipeOptional.get();
-
-        Optional<Ingredient> ingredientOptional = recipe.getIngredients().stream().filter(ingredient -> ingredient.getId().equals(id)).findFirst();
-        if(ingredientOptional.isEmpty()) {
-            throw new RuntimeException("Expected ingredient not found!");
-        }
-
-        return ingredientOptional.get();
+    public Mono<Ingredient> findByRecipeIdAndId(String id_recipe, String id) {
+        return recipeReactiveRepository
+                .findById(id_recipe)
+                .flatMapIterable(Recipe::getIngredients)
+                .filter(ingredient -> ingredient.getId().equals(id))
+                .single();
     }
 
     @Override
-    public Ingredient saveIngredient(Ingredient ingredient) {
-        Optional<Recipe> recipeOptional = recipeRepository.findById(ingredient.getRecipe().getId());
+    public Mono<Ingredient> saveIngredient(Ingredient ingredient) {
+
+        Optional<Recipe> recipeOptional = recipeRepository.findById(ingredient.getRecipeId());
 
         if(recipeOptional.isEmpty()) {
-            throw new RuntimeException("ERROR");
+            return Mono.just(new Ingredient());
         } else {
             Recipe recipe = recipeOptional.get();
-
-            Optional<Ingredient> ingredientOptional = recipe.getIngredients()
+            Optional<Ingredient> ingredientOptional = recipe
+                    .getIngredients()
                     .stream()
-                    .filter(ingredient1 -> ingredient1.getId().equals(ingredient.getId()))
+                    .filter(ingredient1 -> ingredient.getId().equals(ingredient.getId()))
                     .findFirst();
-
-            if(ingredientOptional.isEmpty()) {
-                recipe.addIngredient(ingredient);
-            } else {
+            if(ingredientOptional.isPresent()) {
                 Ingredient ingredientFound = ingredientOptional.get();
-                ingredientFound.setDescription(ingredient.getDescription());
-                ingredientFound.setUof(ingredient.getUof());
                 ingredientFound.setAmount(ingredient.getAmount());
+                ingredientFound.setDescription(ingredient.getDescription());
+                ingredientFound.setUof(uomReactiveRepository.findById(ingredient.getUof().getId()).block());
+                if(ingredientFound.getUof() == null) {
+                    throw new RuntimeException("UOM not found!");
+                }
+            } else {
+                recipe.addIngredient(ingredient);
             }
 
-            Recipe savedRecipe = recipeRepository.save(recipe);
-
-            Optional<Ingredient> savedIngredientOptional = savedRecipe.getIngredients()
-                    .stream()
+            Recipe savedRecipe = recipeReactiveRepository.save(recipe).block();
+            Optional<Ingredient> savedIngredientOptional = savedRecipe.getIngredients().stream()
                     .filter(recipeIngredient -> recipeIngredient.getId().equals(ingredient.getId()))
                     .findFirst();
 
@@ -76,28 +76,32 @@ public class IngredientSeviceImpl implements IngredientSevice {
                         .findFirst();
             }
 
-            return savedIngredientOptional.get();
+            ingredient.setRecipeId(recipe.getId());
+            return Mono.just(ingredient);
         }
 
     }
 
     @Override
-    public void delete(Ingredient ingredient) {
-        Optional<Recipe> recipeOptional = recipeRepository.findById(ingredient.getRecipe().getId());
+    public Mono<Void> deleteById(String ingredient_id, String recipe_id) {
+        Recipe recipeReactive = recipeReactiveRepository.findById(recipe_id).block();
+        Recipe recipeOptional = recipeRepository.findById(recipe_id).get();
 
-        if(recipeOptional.isEmpty()) {
+        if(recipeOptional == null) {
             throw new RuntimeException("ERROR");
         } else {
-            Recipe recipe = recipeOptional.get();
-            Optional<Ingredient> ingredientOptional = recipe.getIngredients().stream().filter(ingredient1 -> ingredient1.getId().equals(ingredient.getId())).findFirst();
-            if(ingredientOptional.isEmpty()) {
-                throw new RuntimeException("Expected ingredient not found!");
+            Optional<Ingredient> ingredientOptional = recipeOptional
+                    .getIngredients()
+                    .stream()
+                    .filter(ingredient -> ingredient.getId().equals(ingredient_id))
+                    .findFirst();
+            if(ingredientOptional.isPresent()) {
+                recipeOptional.getIngredients().remove(ingredientOptional.get());
+                recipeReactiveRepository.save(recipeOptional).block();
             } else {
-                Ingredient ingredientToDelete = ingredientOptional.get();
-                ingredientToDelete.setRecipe(null);
-                recipe.getIngredients().remove(ingredient);
+                log.error("Ingredient not found");
             }
-            recipeRepository.save(recipe);
         }
+        return Mono.empty();
     }
 }

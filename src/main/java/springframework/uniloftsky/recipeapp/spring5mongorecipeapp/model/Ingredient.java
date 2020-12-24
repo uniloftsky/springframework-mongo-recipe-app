@@ -21,7 +21,7 @@ public class Ingredient {
     @DBRef
     private UnitOfMeasure uof;
 
-    private Recipe recipe;
+    private String recipeId;
 
     public Ingredient() {
     }
@@ -32,10 +32,10 @@ public class Ingredient {
         this.uof = uof;
     }
 
-    public Ingredient(String description, BigDecimal amount, UnitOfMeasure uof, Recipe recipe) {
+    public Ingredient(String description, BigDecimal amount, UnitOfMeasure uof, String recipeId) {
         this.description = description;
         this.amount = amount;
         this.uof = uof;
-        this.recipe = recipe;
+        this.recipeId = recipeId;
     }
 }
