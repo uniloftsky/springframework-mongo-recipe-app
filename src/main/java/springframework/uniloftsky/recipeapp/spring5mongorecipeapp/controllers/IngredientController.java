@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Ingredient;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Recipe;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.UnitOfMeasure;
+import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.RecipeReactiveRepository;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.UomReactiveRepository;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.services.IngredientSevice;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.services.RecipeService;
@@ -18,12 +19,14 @@ public class IngredientController {
     private final IngredientSevice ingredientSevice;
     private final UomService uomService;
     private final UomReactiveRepository uomReactiveRepository;
+    private final RecipeReactiveRepository recipeReactiveRepository;
 
-    public IngredientController(RecipeService recipeService, IngredientSevice ingredientSevice, UomService uomService, UomReactiveRepository uomReactiveRepository) {
+    public IngredientController(RecipeService recipeService, IngredientSevice ingredientSevice, UomService uomService, UomReactiveRepository uomReactiveRepository, RecipeReactiveRepository recipeReactiveRepository) {
         this.recipeService = recipeService;
         this.ingredientSevice = ingredientSevice;
         this.uomService = uomService;
         this.uomReactiveRepository = uomReactiveRepository;
+        this.recipeReactiveRepository = recipeReactiveRepository;
     }
 
     @GetMapping
@@ -51,7 +54,7 @@ public class IngredientController {
     @GetMapping
     @RequestMapping("recipe/{id_recipe}/ingredient/new")
     public String newIngredient(@PathVariable String id_recipe, Model model) {
-        Recipe recipe = recipeService.findById(id_recipe);
+        Recipe recipe = recipeReactiveRepository.findById(id_recipe).block();
         Ingredient ingredient = new Ingredient();
         ingredient.setRecipeId(id_recipe);
         recipe.getIngredients().add(ingredient);
@@ -69,7 +72,6 @@ public class IngredientController {
 
     @PostMapping("recipe/{id_recipe}/ingredient")
     public String saveIngredient(@ModelAttribute Ingredient ingredient) {
-        System.out.println(ingredient.getUof());
         Ingredient savedIngredient = ingredientSevice.saveIngredient(ingredient).block();
         return "redirect:/recipe/" + savedIngredient.getRecipeId() + "/ingredient/" + savedIngredient.getId() + "/show";
     }

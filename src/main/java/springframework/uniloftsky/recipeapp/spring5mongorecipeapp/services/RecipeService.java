@@ -1,12 +1,12 @@
 package springframework.uniloftsky.recipeapp.spring5mongorecipeapp.services;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Recipe;
 
-import java.util.Set;
-
 public interface RecipeService {
-    Set<Recipe> getRecipes();
-    Recipe findById(String id);
-    Recipe saveRecipe(Recipe recipe);
+    Flux<Recipe> getRecipes();
+    Mono<Recipe> findById(String id);
+    Mono<Recipe> saveRecipe(Recipe recipe);
     void deleteById(String id);
 }

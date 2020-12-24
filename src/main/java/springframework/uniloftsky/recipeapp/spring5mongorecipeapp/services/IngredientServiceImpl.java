@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Ingredient;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Recipe;
-import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.RecipeRepository;
+import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.UnitOfMeasure;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.UomRepository;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.RecipeReactiveRepository;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.UomReactiveRepository;
@@ -14,16 +14,14 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class IngredientSeviceImpl implements IngredientSevice {
+public class IngredientServiceImpl implements IngredientSevice {
 
-    private  final RecipeRepository recipeRepository;
     private final RecipeReactiveRepository recipeReactiveRepository;
     private final UomReactiveRepository uomReactiveRepository;
     private final UomRepository uomRepository;
 
-    public IngredientSeviceImpl(RecipeReactiveRepository recipeReactiveRepository, UomRepository uomRepository, RecipeRepository recipeRepository, UomReactiveRepository uomReactiveRepository, UomRepository uomRepository1) {
+    public IngredientServiceImpl(RecipeReactiveRepository recipeReactiveRepository, UomRepository uomRepository, UomReactiveRepository uomReactiveRepository, UomRepository uomRepository1) {
         this.recipeReactiveRepository = recipeReactiveRepository;
-        this.recipeRepository = recipeRepository;
         this.uomReactiveRepository = uomReactiveRepository;
         this.uomRepository = uomRepository1;
     }
@@ -40,16 +38,15 @@ public class IngredientSeviceImpl implements IngredientSevice {
     @Override
     public Mono<Ingredient> saveIngredient(Ingredient ingredient) {
 
-        Optional<Recipe> recipeOptional = recipeRepository.findById(ingredient.getRecipeId());
+        Recipe recipe = recipeReactiveRepository.findById(ingredient.getRecipeId()).block();
 
-        if(recipeOptional.isEmpty()) {
-            return Mono.just(new Ingredient());
+        if(recipe == null) {
+            throw new RuntimeException("Recipe not found");
         } else {
-            Recipe recipe = recipeOptional.get();
             Optional<Ingredient> ingredientOptional = recipe
                     .getIngredients()
                     .stream()
-                    .filter(ingredient1 -> ingredient.getId().equals(ingredient.getId()))
+                    .filter(ingredient1 -> ingredient1.getId().equals(ingredient.getId()))
                     .findFirst();
             if(ingredientOptional.isPresent()) {
                 Ingredient ingredientFound = ingredientOptional.get();
@@ -60,6 +57,8 @@ public class IngredientSeviceImpl implements IngredientSevice {
                     throw new RuntimeException("UOM not found!");
                 }
             } else {
+                UnitOfMeasure unitOfMeasure = uomReactiveRepository.findById(ingredient.getUof().getId()).block();
+                ingredient.setUof(unitOfMeasure);
                 recipe.addIngredient(ingredient);
             }
 
@@ -84,8 +83,7 @@ public class IngredientSeviceImpl implements IngredientSevice {
 
     @Override
     public Mono<Void> deleteById(String ingredient_id, String recipe_id) {
-        Recipe recipeReactive = recipeReactiveRepository.findById(recipe_id).block();
-        Recipe recipeOptional = recipeRepository.findById(recipe_id).get();
+        Recipe recipeOptional = recipeReactiveRepository.findById(recipe_id).block();
 
         if(recipeOptional == null) {
             throw new RuntimeException("ERROR");

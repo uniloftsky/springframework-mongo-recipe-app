@@ -2,48 +2,38 @@ package springframework.uniloftsky.recipeapp.spring5mongorecipeapp.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.exceptions.NotFoundException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.model.Recipe;
-import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.RecipeRepository;
-
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import springframework.uniloftsky.recipeapp.spring5mongorecipeapp.repositories.reactive.RecipeReactiveRepository;
 
 @Slf4j
 @Service
 public class RecipeServiceImpl implements RecipeService {
 
-    private final RecipeRepository recipeRepository;
+    private final RecipeReactiveRepository recipeReactiveRepository;
 
-    public RecipeServiceImpl(RecipeRepository recipeRepository) {
-        this.recipeRepository = recipeRepository;
+    public RecipeServiceImpl(RecipeReactiveRepository recipeReactiveRepository) {
+        this.recipeReactiveRepository = recipeReactiveRepository;
     }
 
     @Override
-    public Set<Recipe> getRecipes() {
-        log.debug("I`m in the service");
-        Set<Recipe> recipeSet = new HashSet<>();
-        recipeRepository.findAll().iterator().forEachRemaining(recipeSet::add);
-        return recipeSet;
+    public Flux<Recipe> getRecipes() {
+        return recipeReactiveRepository.findAll();
     }
 
     @Override
-    public Recipe findById(String id) {
-        Optional<Recipe> recipeOptional = recipeRepository.findById(id);
-        if(recipeOptional.isEmpty()) {
-            throw new NotFoundException("Expected recipe not found. For ID value: " + id);
-        }
-        return recipeOptional.get();
+    public Mono<Recipe> findById(String id) {
+        return recipeReactiveRepository.findById(id);
     }
 
     @Override
-    public Recipe saveRecipe(Recipe recipe) {
-        return recipeRepository.save(recipe);
+    public Mono<Recipe> saveRecipe(Recipe recipe) {
+        return recipeReactiveRepository.save(recipe);
     }
 
     @Override
     public void deleteById(String id) {
-        recipeRepository.deleteById(id);
+        recipeReactiveRepository.deleteById(id).block();
     }
 }
